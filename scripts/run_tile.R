@@ -141,13 +141,15 @@ run_tile <- function(tile_id,
 
   # -------------------------
   # 9. RF PREDICTION (30 m)
-  # -------------------------
-
-  rf_pred_30m <- predict_rf_raster(
-    rf_model,
+  predictor_stack_30m <- create_prediction_stack_30m(
     fine_raster
   )
-
+  
+  rf_pred_30m <- predict_rf_raster(
+    rf_model,
+    predictor_stack_30m
+  )
+  
   rf_pred_30m_file <- file.path(output_dir,
                                 paste0(tile_id, "_RF_pred_30m.tif"))
 

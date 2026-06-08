@@ -6,6 +6,82 @@
 # RANDOM FOREST
 # -------------------------
 
+# =========================================================
+# CREATE PREDICTORS
+# =========================================================
+
+create_predictors <- function(fine, coarse) {
+  
+  fact <- round(
+    terra::res(coarse)[1] /
+      terra::res(fine)[1]
+  )
+  
+  q_fun <- function(x, ...) {
+    quantile(
+      x,
+      probs = c(0.1, 0.9),
+      na.rm = TRUE
+    )
+  }
+  
+  tch_mean <- terra::aggregate(
+    fine,
+    fact = fact,
+    fun = mean,
+    na.rm = TRUE
+  )
+  
+  tch_sd <- terra::aggregate(
+    fine,
+    fact = fact,
+    fun = sd,
+    na.rm = TRUE
+  )
+  
+  tch_q <- terra::aggregate(
+    fine,
+    fact = fact,
+    fun = q_fun
+  )
+  
+  names(tch_q) <- c("tch_q10", "tch_q90")
+  
+  tch_mean <- terra::resample(
+    tch_mean,
+    coarse,
+    method = "bilinear"
+  )
+  
+  tch_sd <- terra::resample(
+    tch_sd,
+    coarse,
+    method = "bilinear"
+  )
+  
+  tch_q <- terra::resample(
+    tch_q,
+    coarse,
+    method = "near"
+  )
+  
+  predictors <- c(
+    tch_mean,
+    tch_sd,
+    tch_q
+  )
+  
+  names(predictors) <- c(
+    "tch_mean",
+    "tch_sd",
+    "tch_q10",
+    "tch_q90"
+  )
+  
+  return(predictors)
+}
+
+
 build_training_df <- function(response, predictors) {
   as.data.frame(c(response, predictors), xy = TRUE, na.rm = TRUE)
 }
@@ -41,6 +117,31 @@ predict_rf_raster <- function(model, predictors) {
     type = "response"
   )
 }
+
+# =========================================================
+# CREATE 30 m PREDICTION STACK
+# =========================================================
+
+create_prediction_stack_30m <- function(fine_raster) {
+  
+  r_stack <- c(
+    fine_raster,
+    terra::rast(fine_raster),
+    terra::rast(fine_raster),
+    terra::rast(fine_raster)
+  )
+  
+  names(r_stack) <- c(
+    "tch_mean",
+    "tch_sd",
+    "tch_q10",
+    "tch_q90"
+  )
+  
+  return(r_stack)
+}
+
+
 
 compute_residuals <- function(obs, pred) {
   obs - pred
@@ -107,13 +208,37 @@ compute_correction_factor <- function(final_3km, reference_3km) {
   reference_3km / final_3km
 }
 
-apply_correction <- function(final_30m, correction_3km) {
+# apply_correction <- function(final_30m, correction_3km) {
+# 
+#   correction_30m <- terra::resample(
+#     correction_3km,
+#     final_30m,
+#     method = "bilinear"
+#   )
+# 
+#   final_30m * correction_30m
+# }
 
-  correction_30m <- terra::resample(
+apply_correction <- function(
+    final_30m,
+    correction_3km
+) {
+  
+  fact <- round(
+    terra::res(correction_3km)[1] /
+      terra::res(final_30m)[1]
+  )
+  
+  correction_30m <- terra::disagg(
     correction_3km,
+    fact
+  )
+  
+  correction_30m <- terra::resample(
+    correction_30m,
     final_30m,
     method = "bilinear"
   )
-
+  
   final_30m * correction_30m
 }
