@@ -1,0 +1,57 @@
+# R
+
+.Rhistory
+.RData
+.Ruserdata
+
+# RStudio
+
+.Rproj.user/
+
+# renv
+
+renv/library/
+renv/staging/
+
+# Temporary files
+
+*.tmp
+*.bak
+*.log
+
+# Operating system
+
+.DS_Store
+Thumbs.db
+
+# Large raster outputs
+
+outputs/
+Results/
+
+# Intermediate raster products
+
+*.aux.xml
+
+# Model files (optional)
+
+*.rds
+
+# Generated figures (optional)
+
+*.png
+*.jpg
+*.jpeg
+
+# Quarto / R Markdown
+
+*_cache/
+*.html
+
+# GIS files
+
+*.ovr
+
+# Personal configuration
+
+config_local.yml
