@@ -10,20 +10,44 @@
 # CREATE PREDICTORS
 # =========================================================
 
-create_predictors <- function(fine, coarse) {
+# =========================================================
+# CREATE PREDICTORS AT COARSE RESOLUTION
+# =========================================================
+#
+# fine   = fine-resolution raster (e.g., GLAD 30 m)
+# coarse = reference raster (e.g., dAGB 3 km)
+# fact   = aggregation factor
+#
+# Returns:
+#   SpatRaster with:
+#     tch_mean
+#     tch_sd
+#     tch_q10
+#     tch_q90
+#
+# =========================================================
+
+create_predictors <- function(
+    fine,
+    coarse,
+    fact
+) {
   
-  fact <- round(
-    terra::res(coarse)[1] /
-      terra::res(fine)[1]
-  )
+  # ----------------------------------------
+  # Quantile function
+  # ----------------------------------------
   
   q_fun <- function(x, ...) {
-    quantile(
+    stats::quantile(
       x,
       probs = c(0.1, 0.9),
       na.rm = TRUE
     )
   }
+  
+  # ----------------------------------------
+  # Aggregate fine-resolution raster
+  # ----------------------------------------
   
   tch_mean <- terra::aggregate(
     fine,
@@ -45,7 +69,18 @@ create_predictors <- function(fine, coarse) {
     fun = q_fun
   )
   
-  names(tch_q) <- c("tch_q10", "tch_q90")
+  # ----------------------------------------
+  # Rename quantile layers
+  # ----------------------------------------
+  
+  names(tch_q) <- c(
+    "tch_q10",
+    "tch_q90"
+  )
+  
+  # ----------------------------------------
+  # Match reference grid
+  # ----------------------------------------
   
   tch_mean <- terra::resample(
     tch_mean,
@@ -64,6 +99,10 @@ create_predictors <- function(fine, coarse) {
     coarse,
     method = "near"
   )
+  
+  # ----------------------------------------
+  # Combine predictors
+  # ----------------------------------------
   
   predictors <- c(
     tch_mean,

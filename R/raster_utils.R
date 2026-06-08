@@ -6,6 +6,10 @@ crop_to_reference <- function(r, ref) {
   terra::crop(r, terra::ext(ref))
 }
 
+compute_aggregation_factor <- function(fine,coarse) {
+  round(terra::res(coarse)[1] /terra::res(fine)[1])
+}
+
 aggregate_raster <- function(r, fact, fun = mean) {
   terra::aggregate(r, fact = fact, fun = fun, na.rm = TRUE)
 }

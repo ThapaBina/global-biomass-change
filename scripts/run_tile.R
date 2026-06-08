@@ -45,7 +45,16 @@ run_tile <- function(tile_id,
 
   coarse_ref <- crop_to_reference(coarse_ref, fine_raster)
   names(coarse_ref) <- "dAGB"
-
+  
+  #
+  fine_raster
+  coarse_ref
+  
+  cat('calcualting the factor: \n')
+  
+  # crop
+  fact <- compute_aggregation_factor(fine = fine_raster, coarse=coarse_ref)
+  
   # -------------------------
   # 2. BUILD PREDICTORS
   # -------------------------
