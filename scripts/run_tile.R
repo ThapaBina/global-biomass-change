@@ -54,6 +54,7 @@ run_tile <- function(tile_id,
   
   # crop
   fact <- compute_aggregation_factor(fine = fine_raster, coarse=coarse_ref)
+  cat("Aggregation factor:", fact, "\n")
   
   # -------------------------
   # 2. BUILD PREDICTORS
@@ -61,7 +62,8 @@ run_tile <- function(tile_id,
 
   predictors_3km <- create_predictors(
     fine = fine_raster,
-    coarse = coarse_ref
+    coarse = coarse_ref,
+    fact = fact
   )
 
   # -------------------------

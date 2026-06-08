@@ -198,15 +198,16 @@ fit_variogram <- function(residual_raster) {
 
   vg_emp <- gstat::variogram(dAGB ~ 1, ~x + y, data = df)
 
-  vg_fit <- gstat::fit.variogram(
-    vg_emp,
-    gstat::vgm(
-      model = "Sph",
-      psill = 0.07,
-      range = 200000,
-      nugget = 0.1
-    )
-  )
+  # vg_fit <- gstat::fit.variogram(
+  #   vg_emp,
+  #   gstat::vgm(
+  #     model = "Sph",
+  #     psill = 0.07,
+  #     range = 200000,
+  #     nugget = 0.1
+  #   )
+  # )
+  vg_fit <- gstat::fit.variogram(vg_emp, model = gstat::vgm('Sph'))
 
   list(
     empirical = vg_emp,
@@ -218,19 +219,19 @@ fit_variogram <- function(residual_raster) {
 # -------------------------
 # KRIGING
 # -------------------------
+vgm_fit_cp_fast <- gstat(NULL,"dAGB", dAGB ~ 1, resid_df, locations = ~x+y,
+                         model = vgm_fit,
+                         nmax = 500,
+                         maxdist = vgm_fit$range[2])
+
 
 krige_residuals <- function(residual_raster, vg_obj) {
+  r_utm <- project_to_utm(residual_raster)
+  df <- as.data.frame(r_utm, xy = TRUE, na.rm = TRUE)
 
-  df <- vg_obj$data
   vgm <- vg_obj$model
 
-  g <- gstat::gstat(
-    NULL,
-    "resid",
-    dAGB ~ 1,
-    data = df,
-    model = vgm
-  )
+  g <- gstat::gstat(NULL,  "dAGB", dAGB ~ 1,   data = df,    model = vgm  )
 
   terra::interpolate(residual_raster, g)
 }
