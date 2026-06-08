@@ -1,0 +1,32 @@
+Package: globalBiomassChange
+Type: Package
+Title: Global Biomass Change Mapping Workflow
+Version: 1.0.0
+Authors@R:
+person(
+"Bina",
+"Thapa",
+email = "myemail@purdue.edu",
+role = c("aut", "cre")
+)
+Description: A reproducible workflow for generating global biomass change maps using Random Forest prediction, residual kriging, and trend-preserving correction.
+License: MIT
+Encoding: UTF-8
+LazyData: true
+Depends:
+R (>= 4.3)
+Imports:
+terra,
+sf,
+ranger,
+caret,
+gstat,
+ggplot2,
+dplyr,
+viridisLite
+Suggests:
+knitr,
+rmarkdown
+URL: https://github.com/ThapaBina/global-biomass-change
+BugReports: https://github.com/ThapaBina/global-biomass-change/issues
+RoxygenNote: 7.3.2
