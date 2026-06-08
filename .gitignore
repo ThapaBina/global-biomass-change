@@ -1,4 +1,44 @@
-.Rproj.user
+# R
+
 .Rhistory
 .RData
 .Ruserdata
+
+# RStudio
+
+.Rproj.user/
+
+# renv local libraries
+
+renv/library/
+renv/staging/
+
+# Operating system files
+
+.DS_Store
+Thumbs.db
+
+# Temporary files
+
+*.tmp
+*.bak
+*.log
+
+# Processing outputs
+
+outputs/
+Results/
+
+# Optional large model objects
+
+*.rds
+
+# Auxiliary GIS files
+
+*.aux.xml
+*.ovr
+
+# Local configuration
+
+config_local.yml
+

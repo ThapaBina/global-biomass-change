@@ -28,5 +28,3 @@ project_to_local_utm <- function(rast) {
 q_fun <- function(x) {
   quantile(x, probs = c(0.1, 0.9), na.rm = TRUE)
 }
-
-
