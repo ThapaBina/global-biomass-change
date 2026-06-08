@@ -8,10 +8,15 @@
 
 .Rproj.user/
 
-# renv
+# renv local libraries
 
 renv/library/
 renv/staging/
+
+# Operating system files
+
+.DS_Store
+Thumbs.db
 
 # Temporary files
 
@@ -19,39 +24,21 @@ renv/staging/
 *.bak
 *.log
 
-# Operating system
-
-.DS_Store
-Thumbs.db
-
-# Large raster outputs
+# Processing outputs
 
 outputs/
 Results/
 
-# Intermediate raster products
-
-*.aux.xml
-
-# Model files (optional)
+# Optional large model objects
 
 *.rds
 
-# Generated figures (optional)
+# Auxiliary GIS files
 
-*.png
-*.jpg
-*.jpeg
-
-# Quarto / R Markdown
-
-*_cache/
-*.html
-
-# GIS files
-
+*.aux.xml
 *.ovr
 
-# Personal configuration
+# Local configuration
 
 config_local.yml
+
