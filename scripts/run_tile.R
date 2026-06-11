@@ -119,7 +119,9 @@ run_tile <- function(tile_id,
   )
 
   cat("Variogram fitted\n")
-
+  
+  cat('checking the objects for interpolation issues:\n')
+  
   # -------------------------
   # 7. KRIGING (RESIDUALS)
   # -------------------------
@@ -135,10 +137,13 @@ run_tile <- function(tile_id,
                             paste0(tile_id, "_krig_residuals_3km.tif"))
 
   write_raster(rf_krig_residuals, rf_krig_file)
+  
 
   # -------------------------
   # 8. COMBINE RF + KRIGING
   # -------------------------
+  
+  cat("Creating 3 km maps!!!\n")
 
   rf_plus_krig_3km <- combine_rf_kriging(
     rf_pred_3km,
@@ -152,70 +157,78 @@ run_tile <- function(tile_id,
 
   # -------------------------
   # 9. RF PREDICTION (30 m)
-  predictor_stack_30m <- create_prediction_stack_30m(
-    fine_raster
-  )
-  
-  rf_pred_30m <- predict_rf_raster(
-    rf_model,
-    predictor_stack_30m
-  )
-  
-  rf_pred_30m_file <- file.path(output_dir,
-                                paste0(tile_id, "_RF_pred_30m.tif"))
-
-  write_raster(rf_pred_30m, rf_pred_30m_file)
+  # predictor_stack_30m <- create_prediction_stack_30m(
+  #   fine_raster
+  # )
+  # 
+  # rf_pred_30m <- predict_rf_raster(
+  #   rf_model,
+  #   predictor_stack_30m
+  # )
+  # 
+  # rf_pred_30m_file <- file.path(output_dir,
+  #                               paste0(tile_id, "_RF_pred_30m.tif"))
+  # 
+  # write_raster(rf_pred_30m, rf_pred_30m_file)
 
   # -------------------------
   # 10. UPSCALE COMBINED 3 km → 30 m
   # -------------------------
 
-  rf_krig_30m <- match_resolution(
-    rf_plus_krig_3km,
-    rf_pred_30m
-  )
+  # rf_krig_30m <- match_resolution(
+  #   rf_plus_krig_3km,
+  #   rf_pred_30m
+  # )
 
   # -------------------------
   # 11. FINAL PREDICTION (30 m)
   # -------------------------
 
-  final_30m <- rf_pred_30m + rf_krig_30m
-
-  final_30m_file <- file.path(output_dir,
-                              paste0(tile_id, "_FINAL_30m.tif"))
-
-  write_raster(final_30m, final_30m_file)
+  # final_30m <- rf_pred_30m + rf_krig_30m
+  # 
+  # final_30m_file <- file.path(output_dir,
+  #                             paste0(tile_id, "_FINAL_30m.tif"))
+  # 
+  # write_raster(final_30m, final_30m_file)
 
   # -------------------------
   # 12. AGGREGATE BACK TO 3 km
   # -------------------------
 
-  fact <- round(res(coarse_ref)[1] / res(fine_raster)[1])
-
-  final_3km <- aggregate_raster(final_30m, fact, mean)
-
-  final_3km <- resample_to_reference(final_3km, coarse_ref)
-
-  final_3km_file <- file.path(output_dir,
-                              paste0(tile_id, "_FINAL_3km.tif"))
-
-  write_raster(final_3km, final_3km_file)
+  # fact <- round(res(coarse_ref)[1] / res(fine_raster)[1])
+  # 
+  # final_3km <- aggregate_raster(final_30m, fact, mean)
+  # 
+  # final_3km <- resample_to_reference(final_3km, coarse_ref)
+  # 
+  # final_3km_file <- file.path(output_dir,
+  #                             paste0(tile_id, "_FINAL_3km.tif"))
+  # 
+  # write_raster(final_3km, final_3km_file)
 
   # -------------------------
   # 13. MASS PRESERVATION CORRECTION
   # -------------------------
 
-  correction_factor <- coarse_ref / final_3km
-
-  final_30m_corr <- apply_correction(
-    final_30m,
-    correction_factor
-  )
-
+  # correction_factor <- coarse_ref / final_3km
+  # 
+  # final_30m_corr <- apply_correction(
+  #   final_30m,
+  #   correction_factor
+  # )
+# 
+#   final_corr_file <- file.path(output_dir,
+#                                paste0(tile_id, "_FINAL_30m_CORR.tif"))
+  
+  ## below is testing
+  cat("Apply correction to 3 km map\n")
+  corr_fact = compute_correction_factor(coarse_ref, rf_plus_krig_3km)
+  final_3km_corr = rf_plus_krig_3km*corr_fact
+  
   final_corr_file <- file.path(output_dir,
-                               paste0(tile_id, "_FINAL_30m_CORR.tif"))
+                               paste0(tile_id, "_FINAL_3km_CORR.tif"))
 
-  write_raster(final_30m_corr, final_corr_file)
+  write_raster(final_3km_corr, final_corr_file)
 
   # -------------------------
   # 14. VARIANCE / UNCERTAINTY MAP
@@ -232,8 +245,16 @@ run_tile <- function(tile_id,
   # 15. SCATTER PLOT
   # -------------------------
 
+  # df_plot <- as.data.frame(
+  #   c(coarse_ref, final_3km, final_3km),
+  #   xy = TRUE,
+  #   na.rm = TRUE
+  # )
+  
+  cat("Plotting....\n")
+  
   df_plot <- as.data.frame(
-    c(coarse_ref, final_3km, final_3km),
+    c(coarse_ref, rf_plus_krig_3km, final_3km_corr),
     xy = TRUE,
     na.rm = TRUE
   )
@@ -260,7 +281,7 @@ run_tile <- function(tile_id,
   return(list(
     rf_model = rf_model,
     variogram = vg_obj$model,
-    final_map = final_30m_corr
+    final_map = final_3km_corr
   ))
 }
 

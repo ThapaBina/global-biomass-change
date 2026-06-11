@@ -219,22 +219,33 @@ fit_variogram <- function(residual_raster) {
 # -------------------------
 # KRIGING
 # -------------------------
-vgm_fit_cp_fast <- gstat(NULL,"dAGB", dAGB ~ 1, resid_df, locations = ~x+y,
-                         model = vgm_fit,
-                         nmax = 500,
-                         maxdist = vgm_fit$range[2])
+# vgm_fit_cp_fast <- gstat(NULL,"dAGB", dAGB ~ 1, resid_df, locations = ~x+y,
+#                          model = vgm_fit,
+#                          nmax = 500,
+#                          maxdist = vgm_fit$range[2])
 
-
-krige_residuals <- function(residual_raster, vg_obj) {
+krige_residuals <- function(residual_raster,  vg_obj) {
+  
   r_utm <- project_to_utm(residual_raster)
-  df <- as.data.frame(r_utm, xy = TRUE, na.rm = TRUE)
-
-  vgm <- vg_obj$model
-
-  g <- gstat::gstat(NULL,  "dAGB", dAGB ~ 1,   data = df,    model = vgm  )
-
-  terra::interpolate(residual_raster, g)
+  
+  df <- vg_obj$data
+  
+  #sp::coordinates(df) <- ~x+y
+  
+  g <- gstat(NULL, 'dAGB',
+    formula = dAGB ~ 1,
+    data = df, locations = ~x+y,
+    model = vg_obj$model,
+    nmax = 500,
+    maxdist = vg_obj$model$range[2]
+  )
+  
+  krig_utm <- terra::interpolate(r_utm,  g)
+  
+  terra::project(krig_utm, residual_raster)
 }
+
+
 
 combine_rf_kriging <- function(rf_pred, krig_obj) {
   rf_pred + krig_obj[[1]]
