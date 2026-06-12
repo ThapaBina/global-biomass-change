@@ -158,8 +158,8 @@ run_tile <- function(tile_id,
   # ----------------------------------------
   # 10. UPSCALE COMBINED 3 km → 30 m
   # ----------------------------------------
-  final_3km <- aggregate(final_pred_30m, fact, mean, na.rm = TRUE)
-  final_3km <- resample(final_pred_3km, coarse_ref, method = "bilinear")
+  final_3km <- aggregate(final_30m, fact, mean, na.rm = TRUE)
+  final_3km <- resample(final_3km, coarse_ref, method = "bilinear")
   
   final_3km_file <- file.path(output_dir,paste0(tile_id, "_RFATPKpred_3km.tif"))
   

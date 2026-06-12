@@ -57,7 +57,7 @@ train_rf <- function(df) {
 
   caret::train(dAGB ~ tch_mean + tch_sd + tch_q10 + tch_q90, data = df, 
                method = "ranger", trControl = ctrl, tuneGrid = grid,
-               num.trees = 1000, importance = "permutation", quantreg=TRUE )
+               num.trees = 1000, importance = "permutation", quantreg=TRUE, num.threads=8 )
 }
 
 
@@ -216,7 +216,7 @@ predict_rf_raster_fine_resolution <- function(model, data) {
 
 mass_preservation_correction <- function(final_3km, coarse_ref, final_30m){
   correction_factor = coarse_ref / final_3km
-  fact <- compute_aggregation_factor(fine = fine_30m, coarse=coarse_ref)
+  fact <- compute_aggregation_factor(fine = final_30m, coarse=coarse_ref)
   correction_factor_30m <- disagg(correction_factor, fact)
   correction_factor_30m <- resample(correction_factor_30m, final_30m, method = "bilinear")
   final_30m_corr <- final_30m * correction_factor_30m
