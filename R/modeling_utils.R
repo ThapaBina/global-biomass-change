@@ -2,160 +2,68 @@
 # MODELING UTILITIES (RF + KRIGING + CORRECTION)
 # =========================================================
 
-# -------------------------
-# RANDOM FOREST
-# -------------------------
-
-# =========================================================
-# CREATE PREDICTORS
-# =========================================================
-
-# =========================================================
-# CREATE PREDICTORS AT COARSE RESOLUTION
-# =========================================================
-#
 # fine   = fine-resolution raster (e.g., GLAD 30 m)
 # coarse = reference raster (e.g., dAGB 3 km)
-# fact   = aggregation factor
-#
-# Returns:
-#   SpatRaster with:
-#     tch_mean
-#     tch_sd
-#     tch_q10
-#     tch_q90
-#
-# =========================================================
+# fact = aggregation factor
 
-create_predictors <- function(
-    fine,
-    coarse,
-    fact
-) {
+# =========================================================
+# Create RF predictors at 3 km
+# =========================================================
+create_predictors <- function(fine, coarse, fact) {
   
   # ----------------------------------------
   # Quantile function
   # ----------------------------------------
-  
-  q_fun <- function(x, ...) {
-    stats::quantile(
-      x,
-      probs = c(0.1, 0.9),
-      na.rm = TRUE
-    )
-  }
+  q_fun <- function(x, ...) {stats::quantile( x, probs = c(0.1, 0.9), na.rm = TRUE) }
   
   # ----------------------------------------
   # Aggregate fine-resolution raster
   # ----------------------------------------
+  tch_mean <- terra::aggregate(fine,fact = fact,fun = mean,  na.rm = TRUE )
   
-  tch_mean <- terra::aggregate(
-    fine,
-    fact = fact,
-    fun = mean,
-    na.rm = TRUE
-  )
+  tch_sd <- terra::aggregate(fine,fact = fact,fun = sd, na.rm = TRUE)
   
-  tch_sd <- terra::aggregate(
-    fine,
-    fact = fact,
-    fun = sd,
-    na.rm = TRUE
-  )
-  
-  tch_q <- terra::aggregate(
-    fine,
-    fact = fact,
-    fun = q_fun
-  )
-  
-  # ----------------------------------------
-  # Rename quantile layers
-  # ----------------------------------------
-  
-  names(tch_q) <- c(
-    "tch_q10",
-    "tch_q90"
-  )
+  tch_q <- terra::aggregate(fine,  fact = fact,  fun = q_fun)
   
   # ----------------------------------------
   # Match reference grid
   # ----------------------------------------
+  tch_mean <- terra::resample(tch_mean,  coarse,  method = "bilinear" )
   
-  tch_mean <- terra::resample(
-    tch_mean,
-    coarse,
-    method = "bilinear"
-  )
+  tch_sd <- terra::resample(tch_sd,  coarse,  method = "bilinear" )
   
-  tch_sd <- terra::resample(
-    tch_sd,
-    coarse,
-    method = "bilinear"
-  )
-  
-  tch_q <- terra::resample(
-    tch_q,
-    coarse,
-    method = "near"
-  )
+  tch_q <- terra::resample(tch_q,coarse,   method = "near"  )
   
   # ----------------------------------------
   # Combine predictors
   # ----------------------------------------
-  
-  predictors <- c(
-    tch_mean,
-    tch_sd,
-    tch_q
-  )
-  
-  names(predictors) <- c(
-    "tch_mean",
-    "tch_sd",
-    "tch_q10",
-    "tch_q90"
-  )
+  predictors <- c(tch_mean, tch_sd,  tch_q)
+  names(predictors) <- c( "tch_mean",  "tch_sd","tch_q10","tch_q90" )
   
   return(predictors)
 }
 
-
+# =========================================================
+# Create dataframe for RF modeling
+# =========================================================
 build_training_df <- function(response, predictors) {
   as.data.frame(c(response, predictors), xy = TRUE, na.rm = TRUE)
 }
 
 train_rf <- function(df) {
+  ctrl <- caret::trainControl(method = "cv", number = 5 )
 
-  ctrl <- caret::trainControl(
-    method = "cv",
-    number = 5
-  )
+  grid <- expand.grid(mtry = 2,  splitrule = "variance",  min.node.size = 5 )
 
-  grid <- expand.grid(
-    mtry = 2,
-    splitrule = "variance",
-    min.node.size = 5
-  )
-
-  caret::train(
-    dAGB ~ tch_mean + tch_sd + tch_q10 + tch_q90,
-    data = df,
-    method = "ranger",
-    trControl = ctrl,
-    tuneGrid = grid,
-    num.trees = 1000,
-    importance = "permutation"
-  )
+  caret::train(dAGB ~ tch_mean + tch_sd + tch_q10 + tch_q90, data = df, 
+               method = "ranger", trControl = ctrl, tuneGrid = grid,
+               num.trees = 1000, importance = "permutation" )
 }
 
 predict_rf_raster <- function(model, predictors) {
-  terra::predict(
-    predictors,
-    model$finalModel,
-    type = "response"
-  )
-}
+  terra::predict(predictors,model$finalModel,
+                 type = "quantiles", quantiles = c(0.5) )
+  }
 
 # =========================================================
 # CREATE 30 m PREDICTION STACK
@@ -163,25 +71,14 @@ predict_rf_raster <- function(model, predictors) {
 
 create_prediction_stack_30m <- function(fine_raster) {
   
-  r_stack <- c(
-    fine_raster,
-    terra::rast(fine_raster),
-    terra::rast(fine_raster),
-    terra::rast(fine_raster)
-  )
-  
-  names(r_stack) <- c(
-    "tch_mean",
-    "tch_sd",
-    "tch_q10",
-    "tch_q90"
-  )
-  
+  r_stack <- c(fine_raster, terra::rast(fine_raster),  terra::rast(fine_raster),terra::rast(fine_raster))
+  names(r_stack) <- c("tch_mean", "tch_sd",  "tch_q10",  "tch_q90")
   return(r_stack)
 }
 
-
-
+# =========================================================
+# Compute RF Residuals for Spatial Analysis: Vario + Krig
+# =========================================================
 compute_residuals <- function(obs, pred) {
   obs - pred
 }
@@ -198,15 +95,6 @@ fit_variogram <- function(residual_raster) {
 
   vg_emp <- gstat::variogram(dAGB ~ 1, ~x + y, data = df)
 
-  # vg_fit <- gstat::fit.variogram(
-  #   vg_emp,
-  #   gstat::vgm(
-  #     model = "Sph",
-  #     psill = 0.07,
-  #     range = 200000,
-  #     nugget = 0.1
-  #   )
-  # )
   vg_fit <- gstat::fit.variogram(vg_emp, model = gstat::vgm('Sph'))
 
   list(
@@ -219,10 +107,6 @@ fit_variogram <- function(residual_raster) {
 # -------------------------
 # KRIGING
 # -------------------------
-# vgm_fit_cp_fast <- gstat(NULL,"dAGB", dAGB ~ 1, resid_df, locations = ~x+y,
-#                          model = vgm_fit,
-#                          nmax = 500,
-#                          maxdist = vgm_fit$range[2])
 
 krige_residuals <- function(residual_raster,  vg_obj) {
   
@@ -246,50 +130,100 @@ krige_residuals <- function(residual_raster,  vg_obj) {
 }
 
 
+# -------------------------
+# RF PREDICTION (30 m)
+# -------------------------
 
-combine_rf_kriging <- function(rf_pred, krig_obj) {
-  rf_pred + krig_obj[[1]]
+predict_rf_raster_fine_resolution <- function(model, data) {
+  
+  #library(terra)
+  # dir.create('./Output/terra_tmp')
+  # terraOptions(tempdir = "./Output/terra_tmp")
+  
+  rf_model <- model$finalModel
+  
+  # ---------------------------
+  # 1. Create tiles
+  # ---------------------------
+  grid_r <- rast(ext(data), nrows = 25, ncols = 25, crs = crs(data))
+  tiles <- as.polygons(grid_r)
+  
+  cat("Number of tiles:", nrow(tiles), "\n")
+  
+  # ---------------------------
+  # 2. Temp folder
+  # ---------------------------
+  tmp_dir <- paste0(output_dir,'./tmp')
+  dir.create(tmp_dir, recursive = TRUE, showWarnings = FALSE)
+  
+  # ---------------------------
+  # 3. Prediction function (IMPORTANT)
+  # ---------------------------
+  pred_fun <- function(mod, df) {
+    predict(mod, data = df)$predictions
+  }
+  
+  # ---------------------------
+  # 4. Loop over tiles (FIXED)
+  # ---------------------------
+  for (i in seq_along(tiles)) {
+    
+    r_sub <- crop(data, tiles[i])
+    r_stack <- c(r_sub, rast(r_sub), rast(r_sub),rast(r_sub))
+    names(r_stack) = c("tch_mean", "tch_sd", "tch_q10", "tch_q90")
+    
+    terra::predict(
+      r_stack,
+      rf_model,
+      fun = pred_fun,
+      filename = file.path(tmp_dir, sprintf("pred_tile_%04d.tif", i)),
+      overwrite = TRUE,
+      wopt = list(datatype = "FLT4S", gdal = c("COMPRESS=NONE"))
+    )
+    
+    rm(r_sub, r_stack)
+    gc()   # 🔥 critical fix for crash after few tiles
+  }
+  
+  # ---------------------------
+  # 5. Mosaic safely
+  # ---------------------------
+  pred_files <- list.files(tmp_dir, pattern = "\\.tif$", full.names = TRUE)
+  
+  mosaic_r <- rast(pred_files[1])
+  
+  for (f in pred_files[-1]) {
+    mosaic_r <- mosaic(mosaic_r, rast(f))
+  }
+  
+  # ---------------------------
+  # 6. Write final output
+  # ---------------------------
+  #out_file <- "./Outputs/rf_prediction_final.tif"
+  out_file <- file.path(output_dir, paste0(tile_id, "_RF_pred_30m.tif"))
+  
+  writeRaster(mosaic_r, out_file, overwrite = TRUE,
+              wopt = list(datatype = "FLT4S", gdal = c("COMPRESS=LZW")) )
+  
+  unlink(tmp_dir, recursive = TRUE)
+  
+  cat("Prediction done!!!\n")
+  
+  return(mosaic_r)
 }
 
-# -------------------------
+
+
+# ------------------------------------------------------------------
 # MASS PRESERVATION
-# -------------------------
+# -------------------------------------------------------------------
 
-compute_correction_factor <- function(final_3km, reference_3km) {
-  reference_3km / final_3km
+mass_preservation_correction <- function(final_3km, coarse_ref, final_30m){
+  correction_factor = coarse_ref / final_3km
+  fact <- compute_aggregation_factor(fine = fine_30m, coarse=coarse_ref)
+  correction_factor_30m <- disagg(correction_factor, fact)
+  correction_factor_30m <- resample(correction_factor_30m, final_30m, method = "bilinear")
+  final_30m_corr <- final_30m * correction_factor_30m
+  return(final_30m_corr)
 }
 
-# apply_correction <- function(final_30m, correction_3km) {
-# 
-#   correction_30m <- terra::resample(
-#     correction_3km,
-#     final_30m,
-#     method = "bilinear"
-#   )
-# 
-#   final_30m * correction_30m
-# }
-
-apply_correction <- function(
-    final_30m,
-    correction_3km
-) {
-  
-  fact <- round(
-    terra::res(correction_3km)[1] /
-      terra::res(final_30m)[1]
-  )
-  
-  correction_30m <- terra::disagg(
-    correction_3km,
-    fact
-  )
-  
-  correction_30m <- terra::resample(
-    correction_30m,
-    final_30m,
-    method = "bilinear"
-  )
-  
-  final_30m * correction_30m
-}
