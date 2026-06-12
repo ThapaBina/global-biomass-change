@@ -57,7 +57,7 @@ train_rf <- function(df) {
 
   caret::train(dAGB ~ tch_mean + tch_sd + tch_q10 + tch_q90, data = df, 
                method = "ranger", trControl = ctrl, tuneGrid = grid,
-               num.trees = 1000, importance = "permutation" )
+               num.trees = 1000, importance = "permutation", quantreg=TRUE )
 }
 
 
