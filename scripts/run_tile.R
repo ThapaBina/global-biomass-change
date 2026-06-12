@@ -10,6 +10,7 @@ suppressPackageStartupMessages({
   library(ranger)
   library(ggplot2)
   library(viridisLite)
+  library(parallel)
 })
 
 # =========================
@@ -43,7 +44,7 @@ run_tile <- function(tile_id,
   
   terra_tmp_dir <- normalizePath(terra_tmp_dir, winslash = "/", mustWork = FALSE)
   
-  terraOptions(tempdir = terra_tmp_dir, memfrac = 0.8,  progress = 1)
+  terraOptions(tempdir = terra_tmp_dir, memfrac = 0.8,  progress = 1, threads = parallel::detectCores() - 4)
   
   Sys.setenv(TMPDIR = terra_tmp_dir, GDAL_CACHEMAX = "2048"  )
   
@@ -86,10 +87,10 @@ run_tile <- function(tile_id,
   # -------------------------
   # 4. RF PREDICTION (3 km)
   # -------------------------
-
+  cat("RF Prediction (3 km)\n")
   #rf_pred_3km <- predict_rf_raster(rf_model, predictors_3km)
-  rf_pred_3km <- predict(predictors_3km, rf_model$finalModel,
-          type = "quantiles", quantiles = c(0.5))
+  rf_pred_3km <- terra::predict(predictors_3km, rf_model$finalModel,
+          type = "quantiles", quantiles = c(0.5), na.rm = TRUE, cores=terraOptions()$threads)
 
   # -------------------------
   # 5. RESIDUALS (3 km)
