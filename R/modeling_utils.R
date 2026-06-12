@@ -153,7 +153,7 @@ predict_rf_raster_fine_resolution <- function(model, data) {
   # ---------------------------
   # 2. Temp folder
   # ---------------------------
-  tmp_dir <- paste0(output_dir,'./tmp')
+  tmp_dir <- file.path(output_dir,'tmp')
   dir.create(tmp_dir, recursive = TRUE, showWarnings = FALSE)
   
   # ---------------------------

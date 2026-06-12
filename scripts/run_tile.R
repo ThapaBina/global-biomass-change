@@ -35,6 +35,18 @@ run_tile <- function(tile_id,
   cat("=========================================\n")
 
   ensure_dir(output_dir)
+  
+  # managing the temporary directory for rasters:
+  terra_tmp_dir <- file.path(output_dir, "tmp_terra")
+  
+  dir.create(terra_tmp_dir, recursive = TRUE, showWarnings = FALSE)
+  
+  terra_tmp_dir <- normalizePath(terra_tmp_dir, winslash = "/", mustWork = FALSE)
+  
+  terraOptions(tempdir = terra_tmp_dir, memfrac = 0.8,  progress = 1)
+  
+  Sys.setenv(TMPDIR = terra_tmp_dir, GDAL_CACHEMAX = "2048"  )
+  
 
   # -------------------------
   # 1. READ INPUT DATA
