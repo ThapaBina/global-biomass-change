@@ -89,8 +89,10 @@ run_tile <- function(tile_id,
   # -------------------------
   cat("RF Prediction (3 km)\n")
   
-  rf_pred_3km <- terra::predict(predictors_3km, rf_model$finalModel,
-                                fun = function(model, data) {predict(model, data)$predictions})
+  # rf_pred_3km <- terra::predict(predictors_3km, rf_model$finalModel,
+  #                               fun = function(model, data) {predict(model, data)$predictions})
+  rf_pred_3km<- terra::predict(predictors_3km, rf_model$finalModel,
+                               type = "quantiles", quantiles = c(0.5),cores = 8)
 
   # -------------------------
   # 5. RESIDUALS (3 km)
