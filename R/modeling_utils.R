@@ -60,10 +60,6 @@ train_rf <- function(df) {
                num.trees = 1000, importance = "permutation" )
 }
 
-predict_rf_raster <- function(model, predictors) {
-  terra::predict(predictors,model$finalModel,
-                 type = "quantiles", quantiles = c(0.5) )
-  }
 
 # =========================================================
 # CREATE 30 m PREDICTION STACK

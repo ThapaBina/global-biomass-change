@@ -87,7 +87,9 @@ run_tile <- function(tile_id,
   # 4. RF PREDICTION (3 km)
   # -------------------------
 
-  rf_pred_3km <- predict_rf_raster(rf_model, predictors_3km)
+  #rf_pred_3km <- predict_rf_raster(rf_model, predictors_3km)
+  rf_pred_3km <- predict(predictors_3km, rf_model$finalModel,
+          type = "quantiles", quantiles = c(0.5))
 
   # -------------------------
   # 5. RESIDUALS (3 km)
