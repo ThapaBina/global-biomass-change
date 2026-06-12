@@ -44,7 +44,7 @@ run_tile <- function(tile_id,
   
   terra_tmp_dir <- normalizePath(terra_tmp_dir, winslash = "/", mustWork = FALSE)
   
-  terraOptions(tempdir = terra_tmp_dir, memfrac = 0.8,  progress = 1, threads = parallel::detectCores() - 4)
+  terraOptions(tempdir = terra_tmp_dir, memfrac = 0.5,  progress = 1)
   
   Sys.setenv(TMPDIR = terra_tmp_dir, GDAL_CACHEMAX = "2048"  )
   
