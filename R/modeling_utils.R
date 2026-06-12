@@ -57,7 +57,7 @@ train_rf <- function(df) {
 
   caret::train(dAGB ~ tch_mean + tch_sd + tch_q10 + tch_q90, data = df, 
                method = "ranger", trControl = ctrl, tuneGrid = grid,
-               num.trees = 1000, importance = "permutation", quantreg=TRUE, num.threads=8 )
+               num.trees = 1000, importance = "permutation", quantreg=TRUE, num.threads=10 )
 }
 
 
@@ -130,7 +130,7 @@ krige_residuals <- function(residual_raster,  vg_obj) {
 # RF PREDICTION (30 m)
 # -------------------------
 
-predict_rf_raster_fine_resolution <- function(model, data) {
+predict_rf_raster_fine_resolution <- function(model, data, output_dir) {
   
   #library(terra)
   # dir.create('./Output/terra_tmp')

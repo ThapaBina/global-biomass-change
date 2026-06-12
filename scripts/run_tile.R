@@ -133,12 +133,12 @@ run_tile <- function(tile_id,
   ## remove files to save space:
   rm(rf_residuals_3km, krig_result, rf_krig_residuals)
   
-  # -------------------------
+  # --------------------------------------------------
   # 8. RF PREDICTION (30 m)
-  # -------------------------
+  # --------------------------------------------------
   cat("Random Forest Model Prediction: 30 m\n")
   # this part takes long time 
-  rf_pred_30m = predict_rf_raster_fine_resolution(rf_model, fine_raster)
+  rf_pred_30m = predict_rf_raster_fine_resolution(rf_model, fine_raster, output_dir)
   
   # ------------------------------------------
   # 9. COMBINE RF + KRIG PREDICTION (30 m)
