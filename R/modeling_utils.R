@@ -160,9 +160,9 @@ predict_rf_raster_fine_resolution <- function(model, data, output_dir) {
   }
   
   # ---------------------------
-  # 4. Loop over tiles (FIXED)
+  # 4. Loop over tiles (FIXED): seq_along(tiles)
   # ---------------------------
-  for (i in seq_along(tiles)) {
+  for (i in seq_along(1:50)) {
     
     r_sub <- crop(data, tiles[i])
     r_stack <- c(r_sub, rast(r_sub), rast(r_sub),rast(r_sub))
