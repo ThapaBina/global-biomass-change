@@ -82,25 +82,24 @@ compute_residuals <- function(obs, pred) {
 # -------------------------
 # VARIOGRAM
 # -------------------------
-
 fit_variogram <- function(residual_raster) {
-
-  r_utm <- project_to_utm(residual_raster)
-
-  df <- as.data.frame(r_utm, xy = TRUE, na.rm = TRUE)
-
-  vg_emp <- gstat::variogram(dAGB ~ 1, ~x + y, data = df)
-
-  vg_fit <- gstat::fit.variogram(vg_emp, model = gstat::vgm('Sph'))
   
-  # plot empirical variogram
-  plot(vgm_emp, vgm_fit)
-
-  list(
+  r_utm <- project_to_utm(residual_raster)
+  
+  df <- as.data.frame(r_utm, xy = TRUE, na.rm = TRUE)
+  
+  vg_emp <- gstat::variogram(dAGB ~ 1, ~x + y, data = df)
+  
+  vg_fit <- gstat::fit.variogram(vg_emp, model = gstat::vgm("Sph"))
+  
+  # plot empirical + fitted variogram
+  print(plot(vg_emp, vg_fit))
+  
+  invisible(list(
     empirical = vg_emp,
     model = vg_fit,
     data = df
-  )
+  ))
 }
 
 # -------------------------
@@ -165,7 +164,7 @@ predict_rf_raster_fine_resolution <- function(model, data, tile_id, output_dir) 
   # ---------------------------
   # 4. Loop over tiles (FIXED): seq_along(tiles)
   # ---------------------------
-  for (i in seq_along(51:60)) {
+  for (i in seq_along(tiles)[c(15,51:55)]) {
     
     r_sub <- crop(data, tiles[i])
     r_stack <- c(r_sub, rast(r_sub), rast(r_sub),rast(r_sub))
