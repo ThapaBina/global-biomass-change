@@ -138,12 +138,16 @@ run_tile <- function(tile_id,
   # --------------------------------------------------
   cat("Random Forest Model Prediction: 30 m\n")
   # this part takes long time 
-  rf_pred_30m = predict_rf_raster_fine_resolution(rf_model, fine_raster, output_dir)
+  rf_pred_30m = predict_rf_raster_fine_resolution(rf_model, fine_raster, tile_id, output_dir)
   
   # ------------------------------------------
   # 9. COMBINE RF + KRIG PREDICTION (30 m)
   # -----------------------------------------
   cat("Final Prediction: RF + Krig\n")
+  
+  # crop krig_pred_to match the current raster file: <--- delete later
+  Krig_pred_3km = crop(Krig_pred_3km, ext(rf_pred_30m))
+  
   # resample Kriging residual to 30 m 
   Krig_pred_30m <- resample(Krig_pred_3km, rf_pred_30m, method = "bilinear")
   
@@ -170,6 +174,10 @@ run_tile <- function(tile_id,
   # 11. MASS PRESERVATION CORRECTION
   # -------------------------------------------------
   cat("Mass Preservation Correction\n")
+  
+  # crop reference file as well <- delete this later:
+  coarse_ref <- cropt(coarse_ref, ext(final_30m))
+  
   ## 30 m raster
   final_30m_cor = mass_preservation_correction(final_3km, coarse_ref, final_30m)
   
@@ -188,9 +196,17 @@ run_tile <- function(tile_id,
   write_raster(final_3km_cor, final_3km_file_cor, overwrite = TRUE,
                wopt = list(datatype = "FLT4S", gdal = c("COMPRESS=LZW")))
   
+  # -------------------------
+  # 12. PLOT RASTER
+  # -------------------------
+  # Stack them and plot them:
+  r_stack <- c(coarse_ref, final_30m_cor)
+  names(r_stack) <- c('Reference 3km', 'Fine Resolution 30 m')
+  plot(r_stack)
+  rm(r_stack)
   
   # -------------------------
-  # 12. SCATTER PLOT
+  # 13. SCATTER PLOT
   # -------------------------
 
   cat("Plotting....\n")

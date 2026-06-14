@@ -92,6 +92,9 @@ fit_variogram <- function(residual_raster) {
   vg_emp <- gstat::variogram(dAGB ~ 1, ~x + y, data = df)
 
   vg_fit <- gstat::fit.variogram(vg_emp, model = gstat::vgm('Sph'))
+  
+  # plot empirical variogram
+  plot(vgm_emp, vgm_fit)
 
   list(
     empirical = vg_emp,
@@ -130,7 +133,7 @@ krige_residuals <- function(residual_raster,  vg_obj) {
 # RF PREDICTION (30 m)
 # -------------------------
 
-predict_rf_raster_fine_resolution <- function(model, data, output_dir) {
+predict_rf_raster_fine_resolution <- function(model, data, tile_id, output_dir) {
   
   #library(terra)
   # dir.create('./Output/terra_tmp')
@@ -162,7 +165,7 @@ predict_rf_raster_fine_resolution <- function(model, data, output_dir) {
   # ---------------------------
   # 4. Loop over tiles (FIXED): seq_along(tiles)
   # ---------------------------
-  for (i in seq_along(1:50)) {
+  for (i in seq_along(51:60)) {
     
     r_sub <- crop(data, tiles[i])
     r_stack <- c(r_sub, rast(r_sub), rast(r_sub),rast(r_sub))
