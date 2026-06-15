@@ -217,6 +217,7 @@ predict_rf_raster_fine_resolution <- function(model, data, tile_id, output_dir) 
 # -------------------------------------------------------------------
 
 mass_preservation_correction <- function(final_3km, coarse_ref, final_30m){
+  final_3km <- resample(final_3km, coarse_ref, method = "bilinear")
   correction_factor = coarse_ref / final_3km
   fact <- compute_aggregation_factor(fine = final_30m, coarse=coarse_ref)
   correction_factor_30m <- disagg(correction_factor, fact)

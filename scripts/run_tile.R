@@ -146,10 +146,10 @@ run_tile <- function(tile_id,
   cat("Final Prediction: RF + Krig\n")
   
   # crop krig_pred_to match the current raster file: <--- delete later
-  Krig_pred_3km = crop(Krig_pred_3km, ext(rf_pred_30m))
+  #Krig_pred_3km = crop(Krig_pred_3km, ext(rf_pred_30m)) <----
   
-  # resample Kriging residual to 30 m 
-  Krig_pred_30m <- resample(Krig_pred_3km, rf_pred_30m, method = "bilinear")
+  # resample Kriging residual to 30 m  <----
+  #Krig_pred_30m <- resample(Krig_pred_3km, rf_pred_30m, method = "bilinear") <---
   
   # add (RF prediction + Krig Prediction)
   final_30m <- rf_pred_30m + Krig_pred_30m
@@ -176,7 +176,7 @@ run_tile <- function(tile_id,
   cat("Mass Preservation Correction\n")
   
   # crop reference file as well <- delete this later:
-  coarse_ref <- cropt(coarse_ref, ext(final_30m))
+  #coarse_ref <- crop(coarse_ref, ext(final_30m)) <--- 
   
   ## 30 m raster
   final_30m_cor = mass_preservation_correction(final_3km, coarse_ref, final_30m)
