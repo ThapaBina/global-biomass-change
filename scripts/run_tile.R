@@ -156,7 +156,7 @@ run_tile <- function(tile_id,
   
   final_30m_file <- file.path(output_dir,paste0(tile_id, "_RFATPKpred_30m.tif"))
 
-  write_raster(final_30m, final_30m_file, overwrite = TRUE,
+  writeRaster(final_30m, final_30m_file, overwrite = TRUE,
                wopt = list(datatype = "FLT4S", gdal = c("COMPRESS=LZW")))
   
   # ----------------------------------------
