@@ -103,7 +103,7 @@ run_tile <- function(tile_id,
   
   rf_residuals_3km_file <- file.path(output_dir, paste0(tile_id, "_RF_residuals_3km.tif"))
   
-  write_raster(rf_residuals_3km, rf_residuals_3km_file)
+  writeRaster(rf_residuals_3km, filename=rf_residuals_3km_file, overwrite = TRUE)
 
   # -------------------------
   # 6. VARIOGRAM FITTING
@@ -125,7 +125,7 @@ run_tile <- function(tile_id,
 
   rf_krig_file <- file.path(output_dir,paste0(tile_id, "_krig_variance_3km.tif"))
 
-  write_raster(rf_krig_residuals, rf_krig_file)
+  writeRaster(rf_krig_residuals, filename=rf_krig_file, overwrite = TRUE)
   
   # extract the Kriging residuals:
   Krig_pred_3km <- krig_result[[1]]
@@ -156,7 +156,7 @@ run_tile <- function(tile_id,
   
   final_30m_file <- file.path(output_dir,paste0(tile_id, "_RFATPKpred_30m.tif"))
 
-  writeRaster(final_30m, final_30m_file, overwrite = TRUE,
+  writeRaster(final_30m, filename=final_30m_file, overwrite = TRUE,
                wopt = list(datatype = "FLT4S", gdal = c("COMPRESS=LZW")))
   
   # ----------------------------------------
@@ -167,7 +167,7 @@ run_tile <- function(tile_id,
   
   final_3km_file <- file.path(output_dir,paste0(tile_id, "_RFATPKpred_3km.tif"))
   
-  writeRaster(final_3km, final_3km_file, overwrite = TRUE,
+  writeRaster(final_3km, filename=final_3km_file, overwrite = TRUE,
               wopt = list(datatype = "FLT4S", gdal = c("COMPRESS=LZW")))
 
   # -------------------------------------------------
@@ -183,7 +183,7 @@ run_tile <- function(tile_id,
   
   final_30m_file_cor <- file.path(output_dir,paste0(tile_id, "_RFATPKpred_30m_cor.tif"))
   
-  write_raster(final_30m_cor, final_30m_file_cor, overwrite = TRUE,
+  writeRaster(final_30m_cor, filename=final_30m_file_cor, overwrite = TRUE,
                wopt = list(datatype = "FLT4S", gdal = c("COMPRESS=LZW")))
   
   
@@ -193,7 +193,7 @@ run_tile <- function(tile_id,
   
   final_3km_file_cor <- file.path(output_dir,paste0(tile_id, "_RFATPKpred_3km_cor.tif"))
   
-  write_raster(final_3km_cor, final_3km_file_cor, overwrite = TRUE,
+  writeRaster(final_3km_cor, filename=final_3km_file_cor, overwrite = TRUE,
                wopt = list(datatype = "FLT4S", gdal = c("COMPRESS=LZW")))
   
   # -------------------------
